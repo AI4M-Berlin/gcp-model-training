@@ -12,7 +12,7 @@ from google.cloud import storage
 logging.basicConfig(level=logging.DEBUG)
 COLUMNS_TO_DROP = ['ChestPainType', 'RestingECG', 'ST_Slope', 'Oldpeak', 'ExerciseAngina', 'FastingBS']
 
-def load_data(path) -> pd.DataFrame:
+def load_data(path: str) -> pd.DataFrame:
     data = pd.read_csv(path)
     return data
 
@@ -30,17 +30,24 @@ def preprocess_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     return X, y
 
-def upload_model(model: LogisticRegression, bucket:str) -> None:
+def upload_model(artifact_filename: str, bucket:str) -> None:
+
+    storage_path = os.path.join(bucket, artifact_filename)
+    blob = storage.blob.Blob.from_string(storage_path, client=storage.Client())
+    blob.upload_from_filename(artifact_filename)
+
+    os.remove(artifact_filename)
+
+def uploadToCloud(hparams: Dict[str, str]) -> bool:
+    return hparams["output_path"].startswith("gs:")
+
+def storeModel(model: LogisticRegression) -> str:
     artifact_filename = f'{time.time_ns()}_model.pkl'
     local_path = artifact_filename
     with open(local_path, 'wb') as model_file:
         pickle.dump(model, model_file)
 
-    storage_path = os.path.join(bucket, artifact_filename)
-    blob = storage.blob.Blob.from_string(storage_path, client=storage.Client())
-    blob.upload_from_filename(local_path)
-
-    os.remove(local_path)
+    return local_path
 
 def train(hparams: Dict[str, str]) -> None:
     model = LogisticRegression(penalty=hparams["regularization"], solver='saga')
@@ -49,5 +56,7 @@ def train(hparams: Dict[str, str]) -> None:
     X, y = preprocess_data(data)
     model.fit(X, y)
     logging.info(f"Linear regression model acieved training accuracy of {model.score(X, y)}")
-
-    upload_model(model, hparams["output_path"])
+    
+    file = storeModel(model)
+    if uploadToCloud(hparams):
+        upload_model(file, hparams["output_path"])

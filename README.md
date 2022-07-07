@@ -1,6 +1,10 @@
 # gcp-model-training
 Example repository to train a simple linear on Vertex AI
 
+To train the model locally run
+
+    `python -m trainer.task --input_path heart.csv --output_path . --regularization l2` 
+
 Prerequisites(see https://cloud.google.com/vertex-ai/docs/training/create-custom-job#configure_distributed_training):
 1. Install Docker Engine
 2. Configure Docker Engine to run it without sudo
