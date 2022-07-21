@@ -7,7 +7,7 @@ PROJECT=ai4medicine-cloud
 MODEL_NAME=first_model
 MACHINE=n1-standard-4
 SKLEARN_IMAGE=europe-docker.pkg.dev/vertex-ai/training/scikit-learn-cpu.0-23:latest
-PACKAGE_PATH=/Users/antonshemyakov/code/gcp-model-training
+PACKAGE_PATH="$PWD"
 MODULE=trainer.task
 
 ARGS="--input_path=$DATA_PATH,\
